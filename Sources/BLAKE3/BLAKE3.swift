@@ -359,8 +359,17 @@ public struct BLAKE3Hasher {
     }
 
     public init(derivingKeyFromContext context: String) {
+        self.init(derivingKeyFromContextBytes: Array(context.utf8))
+    }
+
+    /// Initialize derive_key mode with raw context bytes.
+    ///
+    /// Use this when the context is binary (e.g. an IV or random nonce) and
+    /// must be hashed verbatim. The String overload UTF-8-encodes the
+    /// context, which corrupts byte sequences that aren't valid UTF-8.
+    public init(derivingKeyFromContextBytes context: [UInt8]) {
         var contextHasher = BLAKE3Hasher(keyWords: blake3IV, flags: DERIVE_KEY_CONTEXT)
-        contextHasher.update(Array(context.utf8))
+        contextHasher.update(context)
         let contextKey = contextHasher.finalize(outputLength: BLAKE3_KEY_LEN)
         let contextKeyWords = bytesToWords(contextKey)
         self.init(keyWords: contextKeyWords, flags: DERIVE_KEY_MATERIAL)
